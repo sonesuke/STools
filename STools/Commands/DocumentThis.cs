@@ -55,12 +55,15 @@ namespace S2.STools.Commands
         private string GetFuncCommen(CodeFunction func)
         {
             StringBuilder str = new StringBuilder();
-            str.Append(@"///<summary>@@@description" + Environment.NewLine);
+            str.Append(@"///<summary>@@@description</summary>" + Environment.NewLine);
             foreach (string param in GetParamNames(func))
             {
                 str.Append(@"///<param name='" + param + "'>@@@" + @"</param>" + Environment.NewLine);
             }
-            str.Append(@"///</summary>" + Environment.NewLine);
+            if (func.Type.AsFullName != @"void")
+            {
+                str.Append(@"///<returns>@@@</returns>" + Environment.NewLine);
+            }
             return str.ToString(); ;
         }
 
