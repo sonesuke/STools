@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.VisualStudio.Shell;
+using EnvDTE;
 
 namespace S2.STools
 {
@@ -15,6 +16,11 @@ namespace S2.STools
         public SToolsPackage()
         {
             Debug.WriteLine(string.Format(CultureInfo.CurrentCulture, "Entering constructor for: {0}", this.ToString()));
+        }
+
+        protected override void Initialize()
+        {
+            base.Initialize();
         }
     }
 }
