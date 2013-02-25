@@ -9,6 +9,8 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.Shell;
+using EnvDTE;
 
 
 namespace S2.STools
@@ -20,9 +22,17 @@ namespace S2.STools
     {
         [Import]
         IVsEditorAdaptersFactoryService AdaptersFactory = null;
+        [Import]
+        internal SVsServiceProvider ServiceProvider { get; set; }
+        [Import]
+        internal IContentTypeRegistryService ContentTypeRegistryService { get; set; }
+
+        static DTE _dte = null;
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
         {
+            _dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+
             var wpfTextView = AdaptersFactory.GetWpfTextView(textViewAdapter);
             if (wpfTextView == null)
             {
@@ -35,6 +45,11 @@ namespace S2.STools
             IOleCommandTarget next;
             if (ErrorHandler.Succeeded(textViewAdapter.AddCommandFilter(filter, out next)))
                 filter.Next = next;
+        }
+
+        public static DTE GetDTE()
+        {
+            return _dte;
         }
     }
 
@@ -57,7 +72,9 @@ namespace S2.STools
 
             Commands.ICommand command = _commandList.Find(c => c.IsYourId(nCmdID));
             Debug.Assert(command != null);
-            command.Execute();
+            
+            SToolsPackage package = new SToolsPackage();
+            command.Execute(VsTextViewCreationListener.GetDTE());
             return VSConstants.S_OK;
         }
 
@@ -67,7 +84,7 @@ namespace S2.STools
             prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED);
             Commands.ICommand command = _commandList.Find(c => c.IsYourId(prgCmds[0].cmdID));
             Debug.Assert(command != null);
-            if (command.IsEnable())
+            if (command.IsEnable(VsTextViewCreationListener.GetDTE()))
             {
                 prgCmds[0].cmdf |= (uint)OLECMDF.OLECMDF_ENABLED;
             }

@@ -1,16 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.Editor;
-using Microsoft.VisualStudio.OLE.Interop;
-using Microsoft.VisualStudio.Text;
 using Microsoft.VisualStudio.Text.Editor;
-using Microsoft.VisualStudio.TextManager.Interop;
-using Microsoft.VisualStudio.Utilities;
+using EnvDTE;
+using System.Windows.Forms;
+
 
 namespace S2.STools.Commands
 {
@@ -28,143 +22,60 @@ namespace S2.STools.Commands
             return commandId == PkgCmdIDList.CommandIdDocumentThis;
         }
 
-        public bool IsEnable()
+        public bool IsEnable(DTE dte)
         {
-            return _view.Caret.Position.BufferPosition.GetContainingLine().GetText().Contains("=");
+            CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel; ;
+            return cm.Language == CodeModelLanguageConstants.vsCMLanguageVC;
         }
 
-        public void Execute()
+        public void Execute(DTE dte)
         {
-            AlignAssignments();
-        }
-
-        private void AlignAssignments()
-        {
-            // Find all lines above and below with = signs
-            ITextSnapshot snapshot = _view.TextSnapshot;
-
-            if (snapshot != snapshot.TextBuffer.CurrentSnapshot)
+            CodeFunction func = GetSelectedFunction(dte);
+            if (func == null)
+            {
+                MessageBox.Show("Please select target function."); ;
                 return;
-
-            int currentLineNumber = snapshot.GetLineNumberFromPosition(_view.Caret.Position.BufferPosition);
-
-            Dictionary<int, ColumnAndOffset> lineNumberToEqualsColumn = new Dictionary<int, ColumnAndOffset>();
-
-            // Start with the current line
-            ColumnAndOffset columnAndOffset = GetColumnNumberOfFirstEquals(snapshot.GetLineFromLineNumber(currentLineNumber));
-            if (columnAndOffset.Column == -1)
-                return;
-
-            lineNumberToEqualsColumn[currentLineNumber] = columnAndOffset;
-
-            int lineNumber = currentLineNumber;
-            int minLineNumber = 0;
-            int maxLineNumber = snapshot.LineCount - 1;
-
-            // If the selection spans multiple lines, only attempt to fix the lines in the selection
-            if (!_view.Selection.IsEmpty)
-            {
-                var selectionStartLine = _view.Selection.Start.Position.GetContainingLine();
-                if (_view.Selection.End.Position > selectionStartLine.End)
-                {
-                    minLineNumber = selectionStartLine.LineNumber;
-                    maxLineNumber = snapshot.GetLineNumberFromPosition(_view.Selection.End.Position);
-                }
             }
-
-            // Moving backwards
-            for (lineNumber = currentLineNumber - 1; lineNumber >= minLineNumber; lineNumber--)
-            {
-                columnAndOffset = GetColumnNumberOfFirstEquals(snapshot.GetLineFromLineNumber(lineNumber));
-                if (columnAndOffset.Column == -1)
-                    break;
-
-                lineNumberToEqualsColumn[lineNumber] = columnAndOffset;
-            }
-
-            // Moving forwards
-            for (lineNumber = currentLineNumber + 1; lineNumber <= maxLineNumber; lineNumber++)
-            {
-                columnAndOffset = GetColumnNumberOfFirstEquals(snapshot.GetLineFromLineNumber(lineNumber));
-                if (columnAndOffset.Column == -1)
-                    break;
-
-                lineNumberToEqualsColumn[lineNumber] = columnAndOffset;
-            }
-
-            // Perform the actual edit
-            if (lineNumberToEqualsColumn.Count > 1)
-            {
-                int columnToIndentTo = lineNumberToEqualsColumn.Values.Max(c => c.Column);
-
-                using (var edit = snapshot.TextBuffer.CreateEdit())
-                {
-                    foreach (var pair in lineNumberToEqualsColumn.Where(p => p.Value.Column < columnToIndentTo))
-                    {
-                        ITextSnapshotLine line = snapshot.GetLineFromLineNumber(pair.Key);
-                        string spaces = new string(' ', columnToIndentTo - pair.Value.Column);
-
-                        if (!edit.Insert(line.Start.Position + pair.Value.Offset, spaces))
-                            return;
-                    }
-
-                    edit.Apply();
-                }
-            }
+            func.StartPoint.CreateEditPoint().Insert(GetFuncCommen(func));
         }
 
-        private ColumnAndOffset GetColumnNumberOfFirstEquals(ITextSnapshotLine line)
+        private CodeFunction GetSelectedFunction(DTE dte)
         {
-            ITextSnapshot snapshot = line.Snapshot;
-            int tabSize = _view.Options.GetOptionValue(DefaultOptions.TabSizeOptionId);
-
-            int column = 0;
-            int nonWhiteSpaceCount = 0;
-            for (int i = line.Start.Position; i < line.End.Position; i++)
+            CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel;
+            foreach (CodeElement e in cm.CodeElements)
             {
-                char ch = snapshot[i];
-                if (ch == '=')
-                    return new ColumnAndOffset()
-                    {
-                        Column = column,
-                        Offset = (i - line.Start.Position) - nonWhiteSpaceCount
-                    };
-
-                // For the sake of associating characters with the '=', include only 
-                if (!CharAssociatesWithEquals(ch))
-                    nonWhiteSpaceCount = 0;
-                else
-                    nonWhiteSpaceCount++;
-
-                if (ch == '\t')
-                    column += tabSize - (column % tabSize);
-                else
-                    column++;
-
-                // Also, check to see if this is a surrogate pair.  If so, skip the next character by incrementing
-                // the loop counter and increment the nonWhiteSpaceCount without incrementing the column
-                // count.
-                if (char.IsHighSurrogate(ch) &&
-                    i < line.End.Position - 1 && char.IsLowSurrogate(snapshot[i + 1]))
-                {
-                    nonWhiteSpaceCount++;
-                    i++;
-                }
+                if (e.Kind != vsCMElement.vsCMElementFunction) continue;
+                CodeFunction func = (CodeFunction)e;
+                if (IsFuncSelected(dte, func)) return func;
             }
-
-            return new ColumnAndOffset() { Column = -1, Offset = -1 };
+            return null;
         }
 
-        struct ColumnAndOffset
+        private static bool IsFuncSelected(DTE dte, CodeFunction func)
         {
-            public int Column;
-            public int Offset;
+            int selLine = ((TextSelection)dte.ActiveDocument.Selection).AnchorPoint.Line;
+            return func.StartPoint.Line <= selLine
+                                && selLine <= func.EndPoint.Line;
         }
 
-        static HashSet<char> charsThatAssociateWithEquals = new HashSet<char>() { '+', '-', '.', '<', '>', '/', ':', '\\', '*', '&', '^', '%', '$', '#', '@', '!', '~' };
-        private bool CharAssociatesWithEquals(char ch)
+        private string GetFuncCommen(CodeFunction func)
         {
-            return charsThatAssociateWithEquals.Contains(ch);
+            StringBuilder str = new StringBuilder();
+            str.Append(@"///<summary>@@@description" + Environment.NewLine);
+            foreach (string param in GetParamNames(func))
+            {
+                str.Append(@"///<param name='" + param + "'>@@@" + @"</param>" + Environment.NewLine);
+            }
+            str.Append(@"///</summary>" + Environment.NewLine);
+            return str.ToString(); ;
+        }
+
+        private IEnumerable<string> GetParamNames(CodeFunction func)
+        {
+            foreach (CodeParameter param in func.Parameters)
+            {
+                yield return param.FullName;
+            }
         }
     }
 }
