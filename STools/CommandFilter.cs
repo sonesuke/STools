@@ -21,26 +21,17 @@ namespace S2.STools
     class VsTextViewCreationListener : IVsTextViewCreationListener
     {
         [Import]
-        IVsEditorAdaptersFactoryService AdaptersFactory = null;
-        [Import]
-        internal SVsServiceProvider ServiceProvider { get; set; }
-        [Import]
-        internal IContentTypeRegistryService ContentTypeRegistryService { get; set; }
-
+        internal SVsServiceProvider ServiceProvider = null;
+        
         static DTE _dte = null;
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
         {
+            if (textViewAdapter == null) return;
+
             _dte = (DTE)ServiceProvider.GetService(typeof(DTE));
 
-            var wpfTextView = AdaptersFactory.GetWpfTextView(textViewAdapter);
-            if (wpfTextView == null)
-            {
-                Debug.Fail("Unable to get IWpfTextView from text view adapter");
-                return;
-            }
-
-            CommandFilter filter = new CommandFilter(wpfTextView);
+            CommandFilter filter = new CommandFilter();
 
             IOleCommandTarget next;
             if (ErrorHandler.Succeeded(textViewAdapter.AddCommandFilter(filter, out next)))
@@ -55,13 +46,11 @@ namespace S2.STools
 
     class CommandFilter : IOleCommandTarget
     {
-        IWpfTextView _view;
         List<Commands.ICommand> _commandList = new List<Commands.ICommand>();
 
-        public CommandFilter(IWpfTextView view)
+        public CommandFilter()
         {
-            _view = view;
-            _commandList.Add(new Commands.DocumentThis(_view));
+            _commandList.Add(new Commands.DocumentThis());
         }
 
         internal IOleCommandTarget Next { get; set; }
@@ -73,7 +62,6 @@ namespace S2.STools
             Commands.ICommand command = _commandList.Find(c => c.IsYourId(nCmdID));
             Debug.Assert(command != null);
             
-            SToolsPackage package = new SToolsPackage();
             command.Execute(VsTextViewCreationListener.GetDTE());
             return VSConstants.S_OK;
         }

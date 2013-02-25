@@ -10,12 +10,6 @@ namespace S2.STools.Commands
 {
     class DocumentThis : ICommand
     {
-        IWpfTextView _view;
-
-        public DocumentThis(IWpfTextView view)
-        {
-            _view = view;
-        }
 
         public bool IsYourId(uint commandId)
         {
@@ -33,13 +27,13 @@ namespace S2.STools.Commands
             CodeFunction func = GetSelectedFunction(dte);
             if (func == null)
             {
-                MessageBox.Show("Please select target function."); ;
+                MessageBox.Show(Resources.FunctionNotSelected);
                 return;
             }
             func.StartPoint.CreateEditPoint().Insert(GetFuncCommen(func));
         }
 
-        private CodeFunction GetSelectedFunction(DTE dte)
+        private static CodeFunction GetSelectedFunction(DTE dte)
         {
             CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel;
             foreach (CodeElement e in cm.CodeElements)
