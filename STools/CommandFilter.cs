@@ -9,6 +9,8 @@ using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Text.Editor;
 using Microsoft.VisualStudio.TextManager.Interop;
 using Microsoft.VisualStudio.Utilities;
+using Microsoft.VisualStudio.Shell;
+using EnvDTE;
 
 
 namespace S2.STools
@@ -19,34 +21,36 @@ namespace S2.STools
     class VsTextViewCreationListener : IVsTextViewCreationListener
     {
         [Import]
-        IVsEditorAdaptersFactoryService AdaptersFactory = null;
+        internal SVsServiceProvider ServiceProvider = null;
+        
+        static DTE _dte = null;
 
         public void VsTextViewCreated(IVsTextView textViewAdapter)
         {
-            var wpfTextView = AdaptersFactory.GetWpfTextView(textViewAdapter);
-            if (wpfTextView == null)
-            {
-                Debug.Fail("Unable to get IWpfTextView from text view adapter");
-                return;
-            }
+            if (textViewAdapter == null) return;
 
-            CommandFilter filter = new CommandFilter(wpfTextView);
+            _dte = (DTE)ServiceProvider.GetService(typeof(DTE));
+
+            CommandFilter filter = new CommandFilter();
 
             IOleCommandTarget next;
             if (ErrorHandler.Succeeded(textViewAdapter.AddCommandFilter(filter, out next)))
                 filter.Next = next;
         }
+
+        public static DTE GetDTE()
+        {
+            return _dte;
+        }
     }
 
     class CommandFilter : IOleCommandTarget
     {
-        IWpfTextView _view;
         List<Commands.ICommand> _commandList = new List<Commands.ICommand>();
 
-        public CommandFilter(IWpfTextView view)
+        public CommandFilter()
         {
-            _view = view;
-            _commandList.Add(new Commands.DocumentThis(_view));
+            _commandList.Add(new Commands.DocumentThis());
         }
 
         internal IOleCommandTarget Next { get; set; }
@@ -57,7 +61,8 @@ namespace S2.STools
 
             Commands.ICommand command = _commandList.Find(c => c.IsYourId(nCmdID));
             Debug.Assert(command != null);
-            command.Execute();
+            
+            command.Execute(VsTextViewCreationListener.GetDTE());
             return VSConstants.S_OK;
         }
 
@@ -67,7 +72,7 @@ namespace S2.STools
             prgCmds[0].cmdf = (uint)(OLECMDF.OLECMDF_SUPPORTED);
             Commands.ICommand command = _commandList.Find(c => c.IsYourId(prgCmds[0].cmdID));
             Debug.Assert(command != null);
-            if (command.IsEnable())
+            if (command.IsEnable(VsTextViewCreationListener.GetDTE()))
             {
                 prgCmds[0].cmdf |= (uint)OLECMDF.OLECMDF_ENABLED;
             }
