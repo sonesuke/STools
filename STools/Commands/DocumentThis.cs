@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.VisualStudio.Text.Editor;
 using EnvDTE;
 using System.Windows.Forms;
+using System.Globalization;
 
 
 namespace S2.STools.Commands
@@ -55,23 +56,48 @@ namespace S2.STools.Commands
         private string GetFuncCommen(CodeFunction func)
         {
             StringBuilder str = new StringBuilder();
-            str.Append(@"///<summary>@@@description</summary>" + Environment.NewLine);
-            foreach (string param in GetParamNames(func))
+            str.Append(@"///<summary>" + GetDescriptionFromCamelcase(func.Name) + @"</summary>" + Environment.NewLine);
+            foreach (Tuple<string, string> param in GetParamNamesAndTypes(func))
             {
-                str.Append(@"///<param name='" + param + "'>@@@" + @"</param>" + Environment.NewLine);
-            }
-            if (func.Type.AsFullName != @"void")
-            {
-                str.Append(@"///<returns>@@@</returns>" + Environment.NewLine);
+                str.Append(@"///<param name='" + param.Item1 + "'>" + GetDescriptionFromCamelcase(param.Item2) + @"</param>" + Environment.NewLine);
             }
             return str.ToString(); ;
         }
 
-        private IEnumerable<string> GetParamNames(CodeFunction func)
+        private static string GetDescriptionFromCamelcase(string funcName)
+        {
+            StringBuilder buff = new StringBuilder();
+            bool isFirst = true;
+            foreach (char c in funcName.ToCharArray())
+            {
+                if (isFirst)
+                {
+                    isFirst = false;
+                    buff.Append(Char.ToUpper(c, CultureInfo.CurrentCulture));
+                }
+                else
+                {
+                    if (Char.IsUpper(c))
+                    {
+                        buff.Append(" ");
+                        buff.Append(Char.ToLower(c, CultureInfo.CurrentCulture));
+                    }
+                    else
+                    {
+                        buff.Append(c);
+                    }
+                }
+            }
+            buff.Append(".");
+
+            return buff.ToString();
+        }
+
+        private IEnumerable<Tuple<string, string>> GetParamNamesAndTypes(CodeFunction func)
         {
             foreach (CodeParameter param in func.Parameters)
             {
-                yield return param.FullName;
+                yield return new Tuple<string, string>(param.FullName, param.Type.AsString);
             }
         }
     }
