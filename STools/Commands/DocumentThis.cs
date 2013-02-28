@@ -31,7 +31,7 @@ namespace S2.STools.Commands
                 MessageBox.Show(Resources.FunctionNotSelected);
                 return;
             }
-            func.StartPoint.CreateEditPoint().Insert(GetFuncCommen(func));
+            func.StartPoint.CreateEditPoint().Insert(GetFuncComment(func));
         }
 
         private static CodeFunction GetSelectedFunction(DTE dte)
@@ -53,13 +53,13 @@ namespace S2.STools.Commands
                                 && selLine <= func.EndPoint.Line;
         }
 
-        private string GetFuncCommen(CodeFunction func)
+        private string GetFuncComment(CodeFunction func)
         {
             StringBuilder str = new StringBuilder();
             str.Append(@"///<summary>" + GetDescriptionFromCamelcase(func.Name) + @"</summary>" + Environment.NewLine);
-            foreach (Tuple<string, string> param in GetParamNamesAndTypes(func))
+            foreach (string param in GetParamNames(func))
             {
-                str.Append(@"///<param name='" + param.Item1 + "'>" + GetDescriptionFromCamelcase(param.Item2) + @"</param>" + Environment.NewLine);
+                str.Append(@"///<param name='" + param + "'>" + GetDescriptionFromCamelcase(param) + @"</param>" + Environment.NewLine);
             }
             return str.ToString(); ;
         }
@@ -93,11 +93,11 @@ namespace S2.STools.Commands
             return buff.ToString();
         }
 
-        private IEnumerable<Tuple<string, string>> GetParamNamesAndTypes(CodeFunction func)
+        private IEnumerable<string> GetParamNames(CodeFunction func)
         {
             foreach (CodeParameter param in func.Parameters)
             {
-                yield return new Tuple<string, string>(param.FullName, param.Type.AsString);
+                yield return param.FullName;
             }
         }
     }
