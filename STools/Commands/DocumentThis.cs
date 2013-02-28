@@ -31,7 +31,7 @@ namespace S2.STools.Commands
                 MessageBox.Show(Resources.FunctionNotSelected);
                 return;
             }
-            func.StartPoint.CreateEditPoint().Insert(GetFuncCommen(func));
+            func.StartPoint.CreateEditPoint().Insert(GetFuncComment(func));
         }
 
         private static CodeFunction GetSelectedFunction(DTE dte)
@@ -53,7 +53,7 @@ namespace S2.STools.Commands
                                 && selLine <= func.EndPoint.Line;
         }
 
-        private string GetFuncCommen(CodeFunction func)
+        private string GetFuncComment(CodeFunction func)
         {
             StringBuilder str = new StringBuilder();
             str.Append(@"///<summary>" + GetDescriptionFromCamelcase(func.Name) + @"</summary>" + Environment.NewLine);
