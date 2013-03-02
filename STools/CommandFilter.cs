@@ -51,6 +51,7 @@ namespace S2.STools
         public CommandFilter()
         {
             _commandList.Add(new Commands.DocumentThis());
+            _commandList.Add(new Commands.NamingRuleChecker());
         }
 
         internal IOleCommandTarget Next { get; set; }
