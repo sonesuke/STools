@@ -36,14 +36,35 @@ namespace S2.STools.Commands
 
         private static CodeFunction GetSelectedFunction(DTE dte)
         {
-            CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel;
-            foreach (CodeElement e in cm.CodeElements)
+            foreach (CodeFunction func in SearchFunctions(dte))
             {
-                if (e.Kind != vsCMElement.vsCMElementFunction) continue;
-                CodeFunction func = (CodeFunction)e;
                 if (IsFuncSelected(dte, func)) return func;
             }
             return null;
+        }
+
+        private static IEnumerable<CodeFunction> SearchFunctions(DTE dte)
+        {
+            CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel;
+            return SearchFunctionsCore(cm.CodeElements);
+        }
+
+        private static IEnumerable<CodeFunction> SearchFunctionsCore(CodeElements codeElements)
+        {
+            foreach (CodeElement e in codeElements)
+            {
+                if (e.Kind == vsCMElement.vsCMElementClass)
+                {
+                    CodeClass c = (CodeClass)e;
+                    foreach (CodeFunction f in SearchFunctionsCore(c.Children))
+                    {
+                        yield return f;
+                    }
+                }
+                if (e.Kind != vsCMElement.vsCMElementFunction) continue;
+                yield return (CodeFunction)e;
+            }
+            yield break;
         }
 
         private static bool IsFuncSelected(DTE dte, CodeFunction func)
