@@ -44,8 +44,6 @@
       <Group guid="guidSToolsCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
       </Group>
-      
-
 
     </Groups>
     
@@ -65,10 +63,17 @@
         <Parent guid="guidSToolsCmdSet" id="MyMenuGroup" />
         <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
-          <ButtonText>Document This</ButtonText>
+          <ButtonText>Document this function</ButtonText>
         </Strings>
       </Button>
 
+      <Button guid="guidSToolsCmdSet" id="NamingRuleCheck" priority="0x0200" type="Button">
+        <Parent guid="guidSToolsCmdSet" id="MyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Check naming rules</ButtonText>
+        </Strings>
+      </Button>
 
 
     </Buttons>
@@ -99,6 +104,7 @@
 
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="DocumentThis" value="0x0100" />
+      <IDSymbol name="NamingRuleCheck" value="0x0200" />
     </GuidSymbol>
     
     
