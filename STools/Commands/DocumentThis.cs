@@ -19,7 +19,7 @@ namespace S2.STools.Commands
 
         public bool IsEnable(DTE dte)
         {
-            CodeModel cm = dte.ActiveDocument.ProjectItem.ContainingProject.CodeModel; ;
+            FileCodeModel cm = dte.ActiveDocument.ProjectItem.FileCodeModel;
             return cm.Language == CodeModelLanguageConstants.vsCMLanguageVC;
         }
 
@@ -82,7 +82,7 @@ namespace S2.STools.Commands
             {
                 str.Append(@"///<param name='" + param + "'>" + GetDescriptionFromCamelcase(param) + @"</param>" + Environment.NewLine);
             }
-            return str.ToString(); ;
+            return str.ToString();
         }
 
         private static string GetDescriptionFromCamelcase(string funcName)
@@ -109,8 +109,6 @@ namespace S2.STools.Commands
                     }
                 }
             }
-            buff.Append(".");
-
             return buff.ToString();
         }
 
