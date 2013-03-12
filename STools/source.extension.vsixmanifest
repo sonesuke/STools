@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
   <Metadata>
-    <Identity Id="df12694e-50e9-4174-b556-ff34cae42223" Version="1.0" Language="en-US" Publisher="S2" />
+    <Identity Id="df12694e-50e9-4174-b556-ff34cae42223" Version="0.01" Language="en-US" Publisher="S2" />
     <DisplayName>STools</DisplayName>
     <Description>An usefull tools by two persons with initial S.</Description>
   </Metadata>
