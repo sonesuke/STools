@@ -8,5 +8,6 @@ namespace S2.STools
     {
         public const uint CommandIdDocumentThis = 0x100;
         public const uint CommandIdDocumentThisChild = 0x200;
+        public const uint CommandIdLineHighlight = 0x300;
     };
 }

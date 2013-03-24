@@ -75,6 +75,13 @@
         </Strings>
       </Button>
 
+      <Button guid="guidSToolsCmdSet" id="SetLineHighlightDefinition" priority="0x0300" type="Button">
+        <Parent guid="guidSToolsCmdSet" id="MyMenuGroup" />
+        <Icon guid="guidImages" id="bmpPic1" />
+        <Strings>
+          <ButtonText>Set Highlight Definition</ButtonText>
+        </Strings>
+      </Button>
 
     </Buttons>
    
@@ -105,6 +112,7 @@
       <IDSymbol name="MyMenuGroup" value="0x1020" />
       <IDSymbol name="DocumentThis" value="0x0100" />
       <IDSymbol name="NamingRuleCheck" value="0x0200" />
+      <IDSymbol name="SetLineHighlightDefinition" value="0x0300" />
     </GuidSymbol>
     
     
