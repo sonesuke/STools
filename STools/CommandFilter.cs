@@ -52,7 +52,6 @@ namespace S2.STools
         {
             _commandList.Add(new Commands.DocumentThis());
             _commandList.Add(new Commands.NamingRuleChecker());
-            _commandList.Add(new Commands.SetLineHighlightDefinition());
         }
 
         internal IOleCommandTarget Next { get; set; }
